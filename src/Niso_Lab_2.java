@@ -14,10 +14,16 @@ public class Niso_Lab_2 {
                 System.out.println(maxSat.countSatClauses(parser.getArgument(args, "-assignment")));
                 break;
             case 3:
+                MaxSat maxSat1 = new MaxSat();
+                maxSat1.loadClauses(parser.getArgument(args, "-wdimacs"));
+                GeneticAlgorithm geneticAlgorithm = new GeneticAlgorithm(10,
+                        120, 5, maxSat1, 3);
+                long startTime = System.currentTimeMillis();
+                System.out.println(geneticAlgorithm.runGa());
+                long endTime = System.currentTimeMillis() - startTime;
+                System.out.println("Run time: " + endTime / 1000.0);
                 break;
         }
 
     }
-
-
 }
