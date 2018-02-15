@@ -1,5 +1,4 @@
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -9,10 +8,8 @@ public class MaxSat {
     private int numVars;
     private ArrayList<MaxSatClause> clauses;
 
-    public MaxSat(int numClauses, int numVars) {
+    public MaxSat() {
         this.clauses = new ArrayList<>();
-        this.numClauses = numClauses;
-        this.numVars = numVars;
     }
 
     public int getNumClauses() {
@@ -34,16 +31,14 @@ public class MaxSat {
                 while ((line = bufferedReader.readLine()) != null) {
                     if (line.startsWith("c")) {
                         continue;
-
                     } else if (line.startsWith("p")) {
+                        System.out.println(line);
                         String[] splitLine = line.split(" ");
                         this.numVars = Integer.parseInt(splitLine[2]);
                         this.numClauses = Integer.parseInt(splitLine[3]);
                     } else {
                         this.clauses.add(new MaxSatClause(line));
                     }
-                    MaxSatClause clause = new MaxSatClause(line);
-                    this.clauses.add(clause);
                 }
             }
         } catch (IOException e) {
@@ -80,7 +75,7 @@ public class MaxSat {
                 int cl_idx = this.absoluteVariables.get(i) - 1;
                 if (this.variables.get(i) > 0 && assignment.charAt(cl_idx) == '1') {
                     return 1;
-                } else if (this.variables.get(i) > 0 && assignment.charAt(cl_idx) == '0') {
+                } else if (this.variables.get(i) < 0 && assignment.charAt(cl_idx) == '0') {
                     return 1;
                 }
             }
