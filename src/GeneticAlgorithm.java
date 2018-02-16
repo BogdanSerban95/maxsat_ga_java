@@ -1,4 +1,3 @@
-import com.sun.xml.internal.bind.v2.TODO;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -11,8 +10,12 @@ public class GeneticAlgorithm {
     private MaxSat maxSat;
     private int tournamentSize;
     private ArrayList<Individual> population;
-    //    private ArrayList<Integer> popFitness;
+    private ArrayList<Double> cumulativeFitnesses;
     private Random randomGenerator;
+
+    public void setIndSize(int indSize) {
+        this.indSize = indSize;
+    }
 
     GeneticAlgorithm(int popSize, int timeLimit, double chi, MaxSat maxSat, int tournamentSize) {
         this.popSize = popSize;
@@ -22,20 +25,40 @@ public class GeneticAlgorithm {
         this.indSize = this.maxSat.getNumVars();
         this.tournamentSize = tournamentSize;
         this.population = new ArrayList<>();
-//        this.popFitness = new ArrayList<>();
+        this.cumulativeFitnesses = new ArrayList<>();
         this.randomGenerator = new Random();
     }
 
-    private void generateInitialPopulation() {
+    public ArrayList<Individual> getPopulation() {
+        return population;
+    }
+
+    public ArrayList<Double> getCumulativeFitnesses() {
+        return cumulativeFitnesses;
+    }
+
+    public void generateInitialPopulation() {
         for (int i = 0; i < this.popSize; i++) {
             String genotype = randomBitString(this.indSize);
             this.population.add(new Individual(genotype, this.maxSat.countSatClauses(genotype)));
-//            this.popFitness.add(this.maxSat.countSatClauses(individual));
+        }
+        this.computeCumulativeFitnesses();
+    }
+
+    public void computeCumulativeFitnesses() {
+        this.cumulativeFitnesses.clear();
+        int sum = 0;
+        for (Individual ind : this.population) {
+            sum += ind.getFitness();
+            this.cumulativeFitnesses.add((double) sum);
+        }
+        for (int i = 0; i < this.popSize; i++) {
+            this.cumulativeFitnesses.set(i, this.cumulativeFitnesses.get(i) / sum);
         }
     }
 
-    private String mutateIndividual(String bits_x) {
-        double mutationRate = this.chi / this.popSize;
+    public String mutateIndividual(String bits_x) {
+        double mutationRate = this.chi / this.indSize;
         StringBuilder mutant = new StringBuilder();
         for (char c : bits_x.toCharArray()) {
             double prob = this.randomGenerator.nextDouble();
@@ -49,7 +72,7 @@ public class GeneticAlgorithm {
         return mutant.toString();
     }
 
-    private String crossoverOperator(String parent_x, String parent_y) {
+    public String uniformCrossover(String parent_x, String parent_y) {
         StringBuilder offspring = new StringBuilder();
         for (int i = 0; i < parent_x.length(); i++) {
             if (parent_x.charAt(i) != parent_y.charAt(i)) {
@@ -62,7 +85,7 @@ public class GeneticAlgorithm {
         return offspring.toString();
     }
 
-    private ArrayList<String> crossoverBothOffspring(String parent_x, String parent_y) {
+    public ArrayList<String> uniformCrossoverBothOffsprings(String parent_x, String parent_y) {
         StringBuilder offspring_1 = new StringBuilder();
         StringBuilder offspring_2 = new StringBuilder();
         for (int i = 0; i < parent_x.length(); i++) {
@@ -83,18 +106,43 @@ public class GeneticAlgorithm {
         return offsprings;
     }
 
-    private Individual tournamentSelection() {
-        Individual winner = this.population.get(0);
+    public ArrayList<String> onePointCrossover(String parent_x, String parent_y) {
+        StringBuilder offspring_1 = new StringBuilder();
+        StringBuilder offspring_2 = new StringBuilder();
+
+        int pos = randomGenerator.nextInt(this.indSize);
+        offspring_1.append(parent_x.substring(0, pos)).append(parent_y.substring(pos, this.indSize));
+        offspring_2.append(parent_y.substring(0, pos)).append(parent_x.substring(pos, this.indSize));
+        ArrayList<String> offsprings = new ArrayList<>();
+        offsprings.add(offspring_1.toString());
+        offsprings.add(offspring_2.toString());
+        return offsprings;
+    }
+
+    public Individual tournamentSelection() {
+        Individual winner = new Individual();
+        winner.setFitness(0);
         for (int i = 0; i < this.tournamentSize; i++) {
             int contestantIdx = randomGenerator.nextInt(this.popSize);
-            if (this.population.get(contestantIdx).getFitness() > winner.getFitness()) {
-                winner = this.population.get(contestantIdx);
+            Individual contestant = this.population.get(contestantIdx);
+            if (contestant.getFitness() > winner.getFitness()) {
+                winner = contestant;
             }
         }
         return winner;
     }
 
-    private Individual bestIndividual() {
+    public Individual fitnessProportionateSelection() {
+        double prob = randomGenerator.nextDouble();
+        for (int i = 0; i < this.popSize; i++) {
+            if (prob < this.cumulativeFitnesses.get(i)) {
+                return this.population.get(i);
+            }
+        }
+        return null;
+    }
+
+    public Individual bestIndividual() {
         Individual bestIndividual = this.population.get(0);
         for (int i = 0; i < this.popSize; i++) {
             if (this.population.get(i).getFitness() > bestIndividual.getFitness()) {
@@ -106,18 +154,21 @@ public class GeneticAlgorithm {
 
     private ArrayList<Individual> generateNewPopulation(ArrayList<Individual> newPopulation) {
         while (newPopulation.size() < this.popSize) {
-            Individual parent_x = tournamentSelection();
-            Individual parent_y = tournamentSelection();
+//            Individual parent_x = tournamentSelection();
+//            Individual parent_y = tournamentSelection();
+
+            Individual parent_x = fitnessProportionateSelection();
+            Individual parent_y = fitnessProportionateSelection();
 
             Individual newIndividual = new Individual();
 //                newIndividual.setGenotype(
-//                        crossoverOperator(
+//                        uniformCrossover(
 //                                mutateIndividual(parent_x.getGenotype()),
 //                                mutateIndividual(parent_y.getGenotype()))
 //                );
 
             newIndividual.setGenotype(
-                    crossoverOperator(parent_x.getGenotype(), parent_y.getGenotype())
+                    onePointCrossover(parent_x.getGenotype(), parent_y.getGenotype()).get(0)
             );
             newIndividual.setGenotype(mutateIndividual(newIndividual.getGenotype()));
 
@@ -129,10 +180,15 @@ public class GeneticAlgorithm {
 
     private ArrayList<Individual> generateNewPopulationCrowding(ArrayList<Individual> newPopulation) {
         while (newPopulation.size() < this.popSize) {
-            Individual parent_x = tournamentSelection();
-            Individual parent_y = tournamentSelection();
+//            Individual parent_x = tournamentSelection();
+//            Individual parent_y = tournamentSelection();
 
-            ArrayList<String> offsprings = crossoverBothOffspring(parent_x.getGenotype(), parent_y.getGenotype());
+            Individual parent_x = fitnessProportionateSelection();
+            Individual parent_y = fitnessProportionateSelection();
+
+//  ArrayList<String> offsprings = uniformCrossoverBothOffsprings(parent_x.getGenotype(), parent_y.getGenotype());
+//            ArrayList<String> offsprings = onePointCrossover(parent_x.getGenotype(), parent_y.getGenotype());
+            ArrayList<String> offsprings = uniformCrossoverBothOffsprings(parent_x.getGenotype(), parent_y.getGenotype());
             String mutant_1 = mutateIndividual(offsprings.get(0));
             String mutant_2 = mutateIndividual(offsprings.get(1));
 
@@ -144,10 +200,9 @@ public class GeneticAlgorithm {
             child_2.setFitness(maxSat.countSatClauses(mutant_2));
 
 
-//            TODO: Use Hamming distance instead of fitness difference
             if (
-                    Math.abs(parent_x.getFitness() - child_1.getFitness()) + Math.abs(parent_y.getFitness() - child_2.getFitness()) <=
-                            Math.abs(parent_x.getFitness() - child_2.getFitness()) + Math.abs(parent_y.getFitness() - child_1.getFitness())
+                    dist(parent_x.getGenotype(), child_1.getGenotype()) + dist(parent_y.getGenotype(), child_2.getGenotype()) <=
+                            dist(parent_x.getGenotype(), child_2.getGenotype()) + dist(parent_y.getGenotype(), child_1.getGenotype())
                     ) {
                 if (child_1.getFitness() > parent_x.getFitness()) newPopulation.add(child_1);
                 else newPopulation.add(parent_x);
@@ -160,6 +215,7 @@ public class GeneticAlgorithm {
                 else newPopulation.add(parent_y);
             }
         }
+
         return newPopulation;
     }
 
@@ -171,9 +227,9 @@ public class GeneticAlgorithm {
         long startTime = System.currentTimeMillis();
         while (true) {
             bestIndividual = bestIndividual();
-            if ((System.currentTimeMillis() - startTime) / 1000.0 > this.timeLimit) {
-                break;
-            }
+//            if ((System.currentTimeMillis() - startTime) / 1000.0 > this.timeLimit) {
+//                break;
+//            }
 
             if (bestIndividual.getFitness() == this.maxSat.getNumClauses()) {
                 break;
@@ -181,15 +237,21 @@ public class GeneticAlgorithm {
 
             ArrayList<Individual> newPopulation = new ArrayList<>();
             newPopulation.add(bestIndividual);
-//            newPopulation = generateNewPopulation(newPopulation);
+            newPopulation = generateNewPopulation(newPopulation);
 
-            newPopulation = generateNewPopulationCrowding(newPopulation);
+//            newPopulation = generateNewPopulationCrowding(newPopulation);
 
             this.population = newPopulation;
             generationsCount++;
 
-            if (generationsCount % 50 == 0) {
-                System.out.println("Generation: " + generationsCount + ", Best fit: " + bestIndividual.getFitness());
+            if (generationsCount % 20 == 0) {
+                StringBuilder sb = new StringBuilder();
+                for (Individual ind : population) {
+                    sb.append(ind.getFitness()).append(" ");
+                }
+                System.out.println(sb.toString() + "\n");
+                System.out.println("Generation: " + generationsCount + ", Best fit: " + bestIndividual.getFitness() + ", Run time: " + (System.currentTimeMillis() - startTime) / 1000);
+//                break;
             }
         }
         return generationsCount + " " + bestIndividual.getFitness();
@@ -207,5 +269,16 @@ public class GeneticAlgorithm {
             bitString.append(bit);
         }
         return bitString.toString();
+    }
+
+    private int dist(String bits_x, String bits_y) {
+        int total = 0;
+        for (int i = 0; i < bits_x.length(); i++) {
+            if (bits_x.charAt(i) == bits_y.charAt(i)) {
+                total += 1;
+            }
+        }
+
+        return total;
     }
 }

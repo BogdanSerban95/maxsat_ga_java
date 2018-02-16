@@ -32,7 +32,6 @@ public class MaxSat {
                     if (line.startsWith("c")) {
                         continue;
                     } else if (line.startsWith("p")) {
-                        System.out.println(line);
                         String[] splitLine = line.split(" ");
                         this.numVars = Integer.parseInt(splitLine[2]);
                         this.numClauses = Integer.parseInt(splitLine[3]);

@@ -26,4 +26,9 @@ public class Individual {
     public void setGenotype(String genotype) {
         this.genotype = genotype;
     }
+
+    @Override
+    public String toString() {
+        return String.valueOf(this.fitness);
+    }
 }
