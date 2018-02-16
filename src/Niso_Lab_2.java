@@ -16,8 +16,8 @@ public class Niso_Lab_2 {
             case 3:
                 MaxSat maxSat1 = new MaxSat();
                 maxSat1.loadClauses(parser.getArgument(args, "-wdimacs"));
-                GeneticAlgorithm geneticAlgorithm = new GeneticAlgorithm(10,
-                        120, 5, maxSat1, 3);
+                GeneticAlgorithm geneticAlgorithm = new GeneticAlgorithm(20,
+                        Integer.parseInt(parser.getArgument(args,"-time_budget")), 0.9, maxSat1, 4);
                 long startTime = System.currentTimeMillis();
                 System.out.println(geneticAlgorithm.runGa());
                 long endTime = System.currentTimeMillis() - startTime;
