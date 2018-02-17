@@ -139,7 +139,7 @@ public class GeneticAlgorithm {
                 return this.population.get(i);
             }
         }
-        return null;
+        return this.population.get(this.popSize - 1);
     }
 
     public Individual bestIndividual() {
@@ -227,21 +227,18 @@ public class GeneticAlgorithm {
         long startTime = System.currentTimeMillis();
         while (true) {
             bestIndividual = bestIndividual();
-//            if ((System.currentTimeMillis() - startTime) / 1000.0 > this.timeLimit) {
-//                break;
-//            }
-
-            if (bestIndividual.getFitness() == this.maxSat.getNumClauses()) {
+            if ((System.currentTimeMillis() - startTime) / 1000.0 > this.timeLimit) {
                 break;
             }
 
             ArrayList<Individual> newPopulation = new ArrayList<>();
             newPopulation.add(bestIndividual);
-            newPopulation = generateNewPopulation(newPopulation);
+//            newPopulation = generateNewPopulation(newPopulation);
 
-//            newPopulation = generateNewPopulationCrowding(newPopulation);
+            newPopulation = generateNewPopulationCrowding(newPopulation);
 
             this.population = newPopulation;
+            this.computeCumulativeFitnesses();
             generationsCount++;
 
             if (generationsCount % 20 == 0) {
@@ -271,10 +268,10 @@ public class GeneticAlgorithm {
         return bitString.toString();
     }
 
-    private int dist(String bits_x, String bits_y) {
+    public int dist(String bits_x, String bits_y) {
         int total = 0;
         for (int i = 0; i < bits_x.length(); i++) {
-            if (bits_x.charAt(i) == bits_y.charAt(i)) {
+            if (bits_x.charAt(i) != bits_y.charAt(i)) {
                 total += 1;
             }
         }
