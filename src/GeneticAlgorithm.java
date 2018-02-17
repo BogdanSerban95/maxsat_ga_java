@@ -140,7 +140,7 @@ public class GeneticAlgorithm {
         return newPopulation;
     }
 
-    public String runGa() {
+    public ArrayList<String> runGa() {
         Individual bestIndividual = null;
         int generationsCount = 1;
 
@@ -159,19 +159,12 @@ public class GeneticAlgorithm {
             this.population = newPopulation;
             this.computeCumulativeFitnesses();
             generationsCount++;
-//
-            if (generationsCount % 20 == 0) {
-                StringBuilder sb = new StringBuilder();
-                for (Individual ind : population) {
-                    sb.append(ind.getFitness()).append(" ");
-                }
-                System.out.println(sb.toString() + "\n");
-                System.out.println("Generation: " + generationsCount + ", Best fit: " + bestIndividual.getFitness() + ", Run time: " + (System.currentTimeMillis() - startTime) / 1000);
-//                break;
-            }
         }
-        return generationsCount + " " + bestIndividual.getFitness();
-//                + bestIndividual.getGenotype();
+        ArrayList<String> results = new ArrayList<>();
+        results.add(String.valueOf(generationsCount * popSize));
+        results.add(String.valueOf(bestIndividual.getFitness()));
+        results.add(bestIndividual.getGenotype());
+        return results;
     }
 
     private char bitNot(char c) {
