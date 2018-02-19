@@ -10,7 +10,6 @@ public class GeneticAlgorithm {
     private MaxSat maxSat;
     private int tournamentSize;
     private ArrayList<Individual> population;
-    private ArrayList<Double> cumulativeFitnesses;
     private Random randomGenerator;
 
     GeneticAlgorithm(int popSize, int timeLimit, double chi, MaxSat maxSat, int tournamentSize) {
@@ -21,39 +20,17 @@ public class GeneticAlgorithm {
         this.indSize = this.maxSat.getNumVars();
         this.tournamentSize = tournamentSize;
         this.population = new ArrayList<>();
-        this.cumulativeFitnesses = new ArrayList<>();
         this.randomGenerator = new Random();
     }
 
-    public ArrayList<Individual> getPopulation() {
-        return population;
-    }
-
-    public ArrayList<Double> getCumulativeFitnesses() {
-        return cumulativeFitnesses;
-    }
-
-    public void generateInitialPopulation() {
+    private void generateInitialPopulation() {
         for (int i = 0; i < this.popSize; i++) {
             String genotype = randomBitString(this.indSize);
             this.population.add(new Individual(genotype, this.maxSat.countSatClauses(genotype)));
         }
-        this.computeCumulativeFitnesses();
     }
 
-    public void computeCumulativeFitnesses() {
-        this.cumulativeFitnesses.clear();
-        int sum = 0;
-        for (Individual ind : this.population) {
-            sum += ind.getFitness();
-            this.cumulativeFitnesses.add((double) sum);
-        }
-        for (int i = 0; i < this.popSize; i++) {
-            this.cumulativeFitnesses.set(i, this.cumulativeFitnesses.get(i) / sum);
-        }
-    }
-
-    public String mutateIndividual(String bits_x) {
+    private String mutateIndividual(String bits_x) {
         double mutationRate = this.chi / this.indSize;
         StringBuilder mutant = new StringBuilder();
         for (char c : bits_x.toCharArray()) {
@@ -67,7 +44,7 @@ public class GeneticAlgorithm {
         return mutant.toString();
     }
 
-    public String uniformCrossover(String parent_x, String parent_y) {
+    private String uniformCrossover(String parent_x, String parent_y) {
         StringBuilder offspring = new StringBuilder();
         for (int i = 0; i < parent_x.length(); i++) {
             if (parent_x.charAt(i) != parent_y.charAt(i)) {
@@ -80,38 +57,26 @@ public class GeneticAlgorithm {
         return offspring.toString();
     }
 
-    public String onePointCrossover(String parent_x, String parent_y) {
-        StringBuilder offspring_1 = new StringBuilder();
-
-        int pos = randomGenerator.nextInt(this.indSize);
-        offspring_1.append(parent_x.substring(0, pos)).append(parent_y.substring(pos, this.indSize));
-        return offspring_1.toString();
-    }
-
-    public Individual tournamentSelection() {
+    private Individual tournamentSelection() {
         Individual winner = new Individual();
         winner.setFitness(0);
+        ArrayList<Individual> winners = new ArrayList<>();
         for (int i = 0; i < this.tournamentSize; i++) {
             int contestantIdx = randomGenerator.nextInt(this.popSize);
             Individual contestant = this.population.get(contestantIdx);
             if (contestant.getFitness() > winner.getFitness()) {
                 winner = contestant;
+                winners.clear();
+                winners.add(winner);
+            } else if (contestant.getFitness() == winner.getFitness()) {
+                winners.add(contestant);
             }
         }
-        return winner;
+
+        return winners.get(randomGenerator.nextInt(winners.size()));
     }
 
-    public Individual fitnessProportionateSelection() {
-        double prob = randomGenerator.nextDouble();
-        for (int i = 0; i < this.popSize; i++) {
-            if (prob < this.cumulativeFitnesses.get(i)) {
-                return this.population.get(i);
-            }
-        }
-        return this.population.get(this.popSize - 1);
-    }
-
-    public Individual bestIndividual() {
+    private Individual bestIndividual() {
         Individual bestIndividual = this.population.get(0);
         for (int i = 0; i < this.popSize; i++) {
             if (this.population.get(i).getFitness() > bestIndividual.getFitness()) {
@@ -157,7 +122,6 @@ public class GeneticAlgorithm {
             newPopulation = generateNewPopulation(newPopulation);
 
             this.population = newPopulation;
-            this.computeCumulativeFitnesses();
             generationsCount++;
         }
         ArrayList<String> results = new ArrayList<>();
@@ -178,16 +142,5 @@ public class GeneticAlgorithm {
             bitString.append(bit);
         }
         return bitString.toString();
-    }
-
-    public int dist(String bits_x, String bits_y) {
-        int total = 0;
-        for (int i = 0; i < bits_x.length(); i++) {
-            if (bits_x.charAt(i) != bits_y.charAt(i)) {
-                total += 1;
-            }
-        }
-
-        return total;
     }
 }

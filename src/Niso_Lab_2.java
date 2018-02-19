@@ -22,8 +22,8 @@ public class Niso_Lab_2 {
                 int reps = repsStr != null ? Integer.parseInt(repsStr) : 1;
 
                 for (int i = 0; i < reps; i++) {
-                    GeneticAlgorithm geneticAlgorithm = new GeneticAlgorithm(10,
-                            Integer.parseInt(parser.getArgument(args, "-time_budget")), 0.6, maxSat1, 3);
+                    GeneticAlgorithm geneticAlgorithm = new GeneticAlgorithm(20,
+                            Integer.parseInt(parser.getArgument(args, "-time_budget")), 1.2, maxSat1, 3);
                     System.out.println(String.join("\t", geneticAlgorithm.runGa()));
                 }
                 break;

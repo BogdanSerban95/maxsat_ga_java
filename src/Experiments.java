@@ -68,7 +68,7 @@ public class Experiments {
         }
     }
 
-    public static void writeResultsToCsv(String fileName, ArrayList<ArrayList<String>> results, ArrayList<String> labels) {
+    private static void writeResultsToCsv(String fileName, ArrayList<ArrayList<String>> results, ArrayList<String> labels) {
         try (FileWriter fr = new FileWriter(fileName)) {
             try (BufferedWriter br = new BufferedWriter(fr)) {
                 for (int i = 0; i < results.size(); i++) {
@@ -79,7 +79,5 @@ public class Experiments {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
 }
