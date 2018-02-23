@@ -1,5 +1,6 @@
 /.idea
 /out
+/results_backup
 
 *.class
 niso_lab_2.iml
