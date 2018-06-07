@@ -1,6 +1,7 @@
 /.idea
 /out
 /results_backup
+/src/niso2-bas782
 
 *.class
 niso_lab_2.iml
